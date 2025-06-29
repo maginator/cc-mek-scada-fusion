@@ -172,15 +172,15 @@ function Configurator:showHardwareDetection()
     y = y + 2
     term.setCursorPos(4, y)
     term.setTextColor(colors.lime)
-    term.write("✓ Monitors: " .. #peripherals.monitors)
+    term.write("[+] Monitors: " .. #peripherals.monitors)
     
     y = y + 1
     term.setCursorPos(4, y)
-    term.write("✓ Wireless Modems: " .. #peripherals.modems.wireless)
+    term.write("[+] Wireless Modems: " .. #peripherals.modems.wireless)
     
     y = y + 1
     term.setCursorPos(4, y)
-    term.write("✓ Cable Modems: " .. #peripherals.modems.cable)
+    term.write("[+] Cable Modems: " .. #peripherals.modems.cable)
     
     y = y + 2
     term.setCursorPos(2, y)
@@ -244,7 +244,7 @@ function Configurator:configureNetwork()
             }
             term.setCursorPos(2, self.h - 1)
             term.setTextColor(colors.green)
-            term.write("✓ Channels updated!")
+            term.write("[+] Channels updated!")
             sleep(1)
         end
     end
@@ -275,7 +275,7 @@ function Configurator:configureComponents(devices, peripherals)
     if has_devices and has_wireless then
         term.setCursorPos(4, y)
         term.setTextColor(colors.green)
-        term.write("✓ RTU/PLC Configuration")
+        term.write("[+] RTU/PLC Configuration")
         self.config.rtu.type = "auto"
         
         -- Auto-detect primary type
@@ -297,7 +297,7 @@ function Configurator:configureComponents(devices, peripherals)
         y = y + 1
         term.setCursorPos(4, y)
         term.setTextColor(colors.green)
-        term.write("✓ HMI Client supported")
+        term.write("[+] HMI Client supported")
         
         -- Auto-configure monitor
         if #peripherals.monitors > 0 then
@@ -313,7 +313,7 @@ function Configurator:configureComponents(devices, peripherals)
         y = y + 1
         term.setCursorPos(4, y)
         term.setTextColor(colors.green)
-        term.write("✓ Server Configuration")
+        term.write("[+] Server Configuration")
     end
     
     term.setCursorPos(2, self.h - 1)
@@ -377,13 +377,13 @@ function Configurator:saveConfig()
         
         term.setCursorPos(2, self.h - 1)
         term.setTextColor(colors.green)
-        term.write("✓ Configuration saved to " .. CONFIG_FILE)
+        term.write("[+] Configuration saved to " .. CONFIG_FILE)
         sleep(2)
         return true
     else
         term.setCursorPos(2, self.h - 1)
         term.setTextColor(colors.red)
-        term.write("✗ Failed to save configuration")
+        term.write("[-] Failed to save configuration")
         sleep(2)
         return false
     end

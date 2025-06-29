@@ -44,26 +44,27 @@ This system provides industrial-grade monitoring and control for Mekanism fusion
 3. **Choose Quick Setup:**
    - The installer automatically detects your hardware
    - Determines the best SCADA role for this computer
-   - Installs and configures everything automatically
+   - Installs components to `/scada/` directory for easy management
+   - Creates uninstall and status commands automatically
    - **That's it!** Your SCADA system is ready to use.
 
 ### Installation Workflows
 
 When you run `installer`, you get three options:
 
-#### **🚀 Quick Setup (Recommended)**
+#### **[*] Quick Setup (Recommended)**
 - **Automatic hardware detection** - scans for monitors, modems, and Mekanism devices
 - **Smart role assignment** - determines if this should be Server, Control Station, or Monitor
 - **Zero configuration** - sets up everything with optimal defaults
-- **One-click installation** - just confirm and you're done!
+- **Clean installation** - all files go to `/scada/` directory for easy management
 
-#### **📱 Graphical Installer**
-- **Visual interface** with mouse/touch controls
+#### **[G] Graphical Installer**
+- **Visual interface** with mouse/touch controls (ComputerCraft compatible)
 - **Interactive component browser** - see what each component does
 - **Hardware scan visualization** - graphical display of detected equipment
 - **Progress tracking** - real-time installation progress
 
-#### **⚙️ Advanced Setup**
+#### **[A] Advanced Setup**
 - **Manual component selection** - choose exactly what to install
 - **Custom configuration** - modify network channels and settings
 - **Expert mode** - for users who know exactly what they want
@@ -74,10 +75,10 @@ The installer automatically determines the best role for each computer based on 
 
 | Role | Description | Hardware Requirements |
 |------|-------------|----------------------|
-| **🖥️ SCADA Server** | Central control hub | Wireless modem |
-| **🎮 Control Station** | Operator interface | Monitor + wireless modem |
-| **📊 Monitor Station** | Equipment monitoring | Cable modem (connected to Mekanism) + wireless modem |
-| **📈 Data Logger** | Historical data storage | Wireless modem + storage space |
+| **[S] SCADA Server** | Central control hub | Wireless modem |
+| **[C] Control Station** | Operator interface | Monitor + wireless modem |
+| **[M] Monitor Station** | Equipment monitoring | Cable modem (connected to Mekanism) + wireless modem |
+| **[H] Data Logger** | Historical data storage | Wireless modem + storage space |
 
 ### Manual Installation (Advanced)
 
@@ -103,6 +104,37 @@ installer fuel            # Dedicated fuel RTU
 installer laser           # Dedicated laser RTU
 installer historian       # Data historian
 ```
+
+## Management Commands
+
+After installation, the following management commands are available:
+
+```lua
+scada_status              # Check installation status and show file information
+scada_uninstall           # Safely remove all SCADA components with backup
+```
+
+### Clean Installation Structure
+
+All SCADA components are installed to `/scada/` directory:
+- **Easy management** - all files in one location
+- **Safe uninstallation** - automatic backup before removal
+- **Status checking** - view installed components and configuration
+- **No root clutter** - keeps computer root directory clean
+
+### Uninstallation
+
+To completely remove the SCADA system:
+
+```lua
+scada_uninstall
+```
+
+This will:
+1. Create a backup of all SCADA files
+2. Remove the `/scada/` directory
+3. Remove startup script and management commands
+4. Show backup location for recovery if needed
 
 ### Traditional Setup (Dedicated RTUs)
 

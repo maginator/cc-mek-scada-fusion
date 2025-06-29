@@ -135,7 +135,7 @@ function InstallerGUI:drawMainScreen()
         end
         
         -- Format: [X] Icon Name - Description (fits in ~45 chars)
-        local status = installed and "✓" or " "
+        local status = installed and "[+]" or " "
         local text = string.format("[%s] %s %-8s - %-20s", 
             status, component.icon, component.name:sub(1,8), component.desc:sub(1,20))
         
@@ -216,19 +216,19 @@ function InstallerGUI:drawScanScreen()
     -- Display results (compact format)
     self.gui.monitor.setCursorPos(2, y)
     self.gui.monitor.setTextColor(colors.lime)
-    self.gui.monitor.write("✓ Monitors: " .. monitors)
+    self.gui.monitor.write("[+] Monitors: " .. monitors)
     
     y = y + 1
     self.gui.monitor.setCursorPos(2, y)
-    self.gui.monitor.write("✓ Wireless Modems: " .. modems.wireless)
+    self.gui.monitor.write("[+] Wireless Modems: " .. modems.wireless)
     
     y = y + 1
     self.gui.monitor.setCursorPos(2, y)
-    self.gui.monitor.write("✓ Cable Modems: " .. modems.cable)
+    self.gui.monitor.write("[+] Cable Modems: " .. modems.cable)
     
     y = y + 1
     self.gui.monitor.setCursorPos(2, y)
-    self.gui.monitor.write("✓ Mekanism Devices: " .. mekanism)
+    self.gui.monitor.write("[+] Mekanism Devices: " .. mekanism)
     
     y = y + 2
     
@@ -393,7 +393,7 @@ function InstallerGUI:installComponent(component)
     -- Success message
     self.gui.monitor.setCursorPos(2, self.h - 2)
     self.gui.monitor.setTextColor(colors.lime)
-    self.gui.monitor.write("✓ " .. component.name .. " installed successfully!")
+    self.gui.monitor.write("[+] " .. component.name .. " installed successfully!")
     
     self.gui.monitor.setCursorPos(2, self.h - 1)
     self.gui.monitor.setTextColor(colors.lightGray)
