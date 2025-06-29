@@ -1,0 +1,23 @@
+# ComputerCraft specific files
+*.log
+/backup/
+/scada_data/
+
+# Development files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Installation backups
+/backup_*/
+
+# User configuration files (keep template versions)
+*_config_local.lua
