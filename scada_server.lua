@@ -1,9 +1,18 @@
 -- SCADA Server - Central Data Acquisition and Control System
 -- Mekanism Fusion Reactor SCADA Architecture
 
+-- Load configuration if available
+local config = {}
+if fs.exists("scada_config.lua") then
+    local success, loaded_config = pcall(dofile, "scada_config.lua")
+    if success and loaded_config then
+        config = loaded_config
+    end
+end
+
 local CONFIG = {
     MODEM_SIDE = "back",
-    CHANNELS = {
+    CHANNELS = config.network and config.network.channels or {
         REACTOR = 100,
         FUEL = 101,
         ENERGY = 102,
@@ -11,6 +20,8 @@ local CONFIG = {
         HMI = 104,
         ALARM = 105
     },
+    
+    SERVER_ID = config.components and config.components.server_id or "SCADA_SERVER_01",
     
     UPDATE_INTERVALS = {
         DATA_COLLECTION = 1,

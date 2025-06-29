@@ -36,7 +36,13 @@ This system provides industrial-grade monitoring and control for Mekanism fusion
    pastebin get <pastebin-id> installer
    ```
 
-2. **Install a component:**
+2. **Configure your system (recommended first step):**
+   ```lua
+   installer configure
+   configurator
+   ```
+
+3. **Install components:**
    ```lua
    installer <component>
    ```
@@ -45,21 +51,24 @@ This system provides industrial-grade monitoring and control for Mekanism fusion
 
 | Component | Description | Purpose |
 |-----------|-------------|---------|
+| `configure` | Configuration Wizard | Interactive setup for custom configuration |
 | `server` | SCADA Server | Central data acquisition and control |
 | `hmi` | HMI Client | Operator interface with touchscreen |
-| `reactor` | Reactor RTU/PLC | Direct fusion reactor control |
-| `energy` | Energy RTU/PLC | Energy storage monitoring |
-| `fuel` | Fuel RTU/PLC | Fuel system management |
-| `laser` | Laser RTU/PLC | Fusion laser control |
+| `rtu` | **Universal RTU/PLC** | **Auto-detecting RTU for any Mekanism system** |
+| `reactor` | Reactor RTU/PLC | Dedicated fusion reactor control |
+| `energy` | Energy RTU/PLC | Dedicated energy storage monitoring |
+| `fuel` | Fuel RTU/PLC | Dedicated fuel system management |
+| `laser` | Laser RTU/PLC | Dedicated fusion laser control |
 | `historian` | Data Historian | Historical data and trending |
 | `all` | Complete System | All components (dev/testing) |
 
-### Example Installation
+### Quick Setup (New Universal RTU)
 
-For a typical setup, install components on separate computers:
+**Simple 3-Computer Setup:**
 
 1. **Central Server Computer:**
    ```lua
+   installer configure    # Optional: custom configuration
    installer server
    ```
 
@@ -68,12 +77,66 @@ For a typical setup, install components on separate computers:
    installer hmi
    ```
 
-3. **Reactor Computer (connected to reactor):**
+3. **Any RTU Computer (connected to Mekanism devices):**
    ```lua
-   installer reactor
+   installer rtu          # Auto-detects: Reactor, Energy, Fuel, or Laser
    ```
 
-4. **Additional RTU computers as needed**
+The Universal RTU automatically detects what Mekanism systems are connected and configures itself accordingly!
+
+### Traditional Setup (Dedicated RTUs)
+
+For dedicated RTU computers, use specific components:
+
+1. **Reactor Computer:** `installer reactor`
+2. **Energy Computer:** `installer energy`  
+3. **Fuel Computer:** `installer fuel`
+4. **Laser Computer:** `installer laser`
+
+## Configuration System
+
+### Interactive Configuration Wizard
+
+The configuration wizard automatically detects your hardware and helps set up custom configurations:
+
+```lua
+installer configure
+configurator
+```
+
+**Features:**
+- **Hardware Auto-Detection:** Automatically finds monitors, modems, and Mekanism devices
+- **Component Type Detection:** Determines if computer should be Server, HMI, or RTU
+- **Custom Channel Assignment:** Configure communication channels for your network
+- **RTU Auto-Configuration:** Sets up RTU type and ID based on connected devices
+- **Peripheral Side Detection:** Auto-detects which sides have modems and monitors
+
+**Generated Configuration:**
+- Creates `scada_config.lua` with your custom settings
+- All SCADA components automatically load this configuration
+- Override default settings without modifying code
+
+### Universal RTU/PLC
+
+The Universal RTU automatically adapts to whatever Mekanism systems are connected:
+
+**Auto-Detection Features:**
+- **Device Type Recognition:** Automatically classifies connected Mekanism devices
+- **RTU Type Assignment:** Configures as Reactor, Energy, Fuel, or Laser RTU
+- **Peripheral Auto-Discovery:** Finds cable and wireless modems on any side
+- **Dynamic Configuration:** Adapts behavior based on detected equipment
+
+**Supported Systems:**
+- **Reactor:** Fusion Reactor Controllers, Reactor Frames
+- **Energy:** Induction Matrix, Energy Cubes (all tiers)
+- **Fuel:** Dynamic Tanks, Chemical Tanks, Electrolytic Separators  
+- **Laser:** Fusion Lasers, Laser Amplifiers
+
+**Usage:**
+```lua
+installer rtu    # Install universal RTU
+universal_rtu    # Runs auto-detection and configuration
+```
 
 ## Component Details
 

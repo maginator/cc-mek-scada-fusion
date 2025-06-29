@@ -7,6 +7,18 @@ local GITHUB_BRANCH = "main"
 local BASE_URL = "https://raw.githubusercontent.com/" .. GITHUB_REPO .. "/" .. GITHUB_BRANCH .. "/"
 
 local COMPONENTS = {
+    ["configure"] = {
+        name = "Configuration Wizard",
+        description = "Interactive setup wizard for SCADA components",
+        files = {
+            {src = "configurator.lua", dst = "configurator.lua", startup = false},
+        },
+        requirements = {
+            "Run this first to configure your SCADA system",
+            "Detects hardware and sets up component configuration"
+        }
+    },
+
     ["server"] = {
         name = "SCADA Server",
         description = "Central data acquisition and control server",
@@ -14,8 +26,9 @@ local COMPONENTS = {
             {src = "scada_server.lua", dst = "scada_server.lua", startup = true},
         },
         requirements = {
-            "Wireless Modem (back side)",
-            "Computer with adequate storage"
+            "Wireless Modem (auto-detected or configured)",
+            "Computer with adequate storage",
+            "Run 'configurator' first for custom setup"
         }
     },
     
@@ -26,61 +39,79 @@ local COMPONENTS = {
             {src = "scada_hmi.lua", dst = "scada_hmi.lua", startup = true},
         },
         requirements = {
-            "Monitor (top side)",
-            "Wireless Modem (back side)",
-            "Touch-capable monitor recommended"
+            "Monitor (auto-detected or configured)",
+            "Wireless Modem (auto-detected)",
+            "Run 'configurator' first for custom setup"
+        }
+    },
+    
+    ["rtu"] = {
+        name = "Universal RTU/PLC",
+        description = "Auto-detecting RTU for any Mekanism system",
+        files = {
+            {src = "universal_rtu.lua", dst = "universal_rtu.lua", startup = true},
+        },
+        requirements = {
+            "Wireless Modem (auto-detected)",
+            "Cable Modem (auto-detected) connected to Mekanism devices",
+            "Automatically detects: Reactor, Energy, Fuel, or Laser systems",
+            "Run 'configurator' first for custom setup"
         }
     },
     
     ["reactor"] = {
         name = "Reactor RTU/PLC",
-        description = "Fusion reactor control unit",
+        description = "Dedicated fusion reactor control unit",
         files = {
             {src = "fusion_reactor_mon.lua", dst = "reactor_rtu.lua", startup = true},
         },
         requirements = {
-            "Cable Modem (back side) connected to reactor",
-            "Wireless Modem (top side) for SCADA communication",
-            "Direct connection to Mekanism Fusion Reactor"
+            "Cable Modem connected to reactor",
+            "Wireless Modem for SCADA communication",
+            "Direct connection to Mekanism Fusion Reactor",
+            "Use 'rtu' component for auto-detecting alternative"
         }
     },
     
     ["energy"] = {
         name = "Energy RTU/PLC", 
-        description = "Energy storage monitoring unit",
+        description = "Dedicated energy storage monitoring unit",
         files = {
             {src = "energy_storage.lua", dst = "energy_rtu.lua", startup = true},
         },
         requirements = {
-            "Cable Modem (back side) connected to energy storage",
-            "Wireless Modem (top side) for SCADA communication",
-            "Connection to Mekanism Energy Storage (Induction Matrix or Energy Cubes)"
+            "Cable Modem connected to energy storage",
+            "Wireless Modem for SCADA communication",
+            "Connection to Mekanism Energy Storage",
+            "Use 'rtu' component for auto-detecting alternative"
         }
     },
     
     ["fuel"] = {
         name = "Fuel RTU/PLC",
-        description = "Fuel system monitoring unit", 
+        description = "Dedicated fuel system monitoring unit", 
         files = {
             {src = "fuel_control.lua", dst = "fuel_rtu.lua", startup = true},
         },
         requirements = {
-            "Cable Modem (back side) connected to fuel systems",
-            "Wireless Modem (top side) for SCADA communication",
-            "Connection to Mekanism Dynamic Tanks and Chemical systems"
+            "Cable Modem connected to fuel systems",
+            "Wireless Modem for SCADA communication",
+            "Connection to Mekanism Dynamic Tanks",
+            "Use 'rtu' component for auto-detecting alternative"
         }
     },
     
     ["laser"] = {
         name = "Laser RTU/PLC",
-        description = "Fusion laser control unit",
+        description = "Dedicated fusion laser control unit",
         files = {
             {src = "laser_control.lua", dst = "laser_rtu.lua", startup = true},
         },
         requirements = {
-            "Cable Modem (back side) connected to laser systems", 
-            "Wireless Modem (top side) for SCADA communication",
-            "Connection to Mekanism Fusion Lasers"
+            "Cable Modem connected to laser systems", 
+            "Wireless Modem for SCADA communication",
+            "Connection to Mekanism Fusion Lasers",
+            "Use 'rtu' component for auto-detecting alternative"
         }
     },
     
@@ -101,8 +132,10 @@ local COMPONENTS = {
         name = "Complete SCADA System",
         description = "Install all components (for testing/development)",
         files = {
+            {src = "configurator.lua", dst = "configurator.lua"},
             {src = "scada_server.lua", dst = "scada_server.lua"},
             {src = "scada_hmi.lua", dst = "scada_hmi.lua"},
+            {src = "universal_rtu.lua", dst = "universal_rtu.lua"},
             {src = "fusion_reactor_mon.lua", dst = "reactor_rtu.lua"},
             {src = "energy_storage.lua", dst = "energy_rtu.lua"},
             {src = "fuel_control.lua", dst = "fuel_rtu.lua"},
@@ -202,11 +235,25 @@ function Installer:installComponent(component_name)
     end
     
     print()
-    print("Continue with installation? (y/N)")
-    local input = read()
-    if input:lower() ~= "y" and input:lower() ~= "yes" then
-        self:log("Installation cancelled by user")
-        return false
+    
+    -- Special handling for configuration component
+    if component_name == "configure" then
+        print("This will install the configuration wizard.")
+        print("Run 'configurator' after installation to setup your SCADA system.")
+        print("Continue with installation? (Y/n)")
+        local input = read()
+        if input:lower() == "n" or input:lower() == "no" then
+            self:log("Installation cancelled by user")
+            return false
+        end
+    else
+        print("TIP: Run 'installer configure' first to setup custom configuration")
+        print("Continue with installation? (y/N)")
+        local input = read()
+        if input:lower() ~= "y" and input:lower() ~= "yes" then
+            self:log("Installation cancelled by user")
+            return false
+        end
     end
     
     -- Backup existing files

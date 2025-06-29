@@ -1,15 +1,39 @@
 -- SCADA HMI (Human Machine Interface) Client
 -- Operator Control Interface for Mekanism Fusion Reactor SCADA System
 
+-- Load configuration if available
+local config = {}
+if fs.exists("scada_config.lua") then
+    local success, loaded_config = pcall(dofile, "scada_config.lua")
+    if success and loaded_config then
+        config = loaded_config
+    end
+end
+
+-- Auto-detect monitor if configured as "auto"
+local function detectMonitor()
+    if config.hmi and config.hmi.monitor_side and config.hmi.monitor_side ~= "auto" then
+        return config.hmi.monitor_side
+    end
+    
+    local sides = {"top", "bottom", "left", "right", "front", "back"}
+    for _, side in ipairs(sides) do
+        if peripheral.getType(side) == "monitor" then
+            return side
+        end
+    end
+    return "top"  -- fallback
+end
+
 local CONFIG = {
-    MONITOR_SIDE = "top",
+    MONITOR_SIDE = detectMonitor(),
     MODEM_SIDE = "back",
-    CHANNELS = {
+    CHANNELS = config.network and config.network.channels or {
         HMI = 104,
         ALARM = 105
     },
     
-    CLIENT_ID = "HMI_01",
+    CLIENT_ID = config.components and config.components.hmi_id or "HMI_01",
     UPDATE_INTERVAL = 0.5,
     
     COLORS = {
