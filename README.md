@@ -368,12 +368,15 @@ All components will auto-start on computer reboot after installation.
 - Fuel system status and production
 - Laser system readiness and control
 
-### ✅ Safety Features
-- Emergency SCRAM functionality
-- Temperature monitoring and alarms
-- Fuel level warnings
-- Equipment status monitoring
-- Automatic system shutdown on critical conditions
+### ✅ Enhanced Safety & Reliability
+- **Emergency SCRAM functionality** - always available via GUI or keyboard
+- **Temperature monitoring and alarms** with visual/audio alerts
+- **Fuel level warnings** and automatic notifications  
+- **Equipment status monitoring** with connection health checks
+- **Robust error handling** - programs continue running despite component failures
+- **Auto-recovery** - automatically reconnect when hardware comes back online
+- **Error logging** - detailed error history with timestamps
+- **Graceful degradation** - switches to text mode if GUI components fail
 
 ### ✅ Data Management
 - Real-time data collection
@@ -382,12 +385,14 @@ All components will auto-start on computer reboot after installation.
 - Data retention policies
 - Automated aggregation
 
-### ✅ User Interface
-- Touch-screen operation
-- Multiple view screens
-- Visual status indicators
-- Command feedback
-- Alarm notifications
+### ✅ Enhanced User Interface
+- **Touch-screen operation** with mouse/keyboard fallback
+- **Multiple view screens** (Overview, Reactor, Energy, Status)
+- **Visual status indicators** and progress bars
+- **Error recovery** - programs continue running despite errors
+- **Real-time status displays** with graphical and text modes
+- **Emergency controls** - SCRAM button always accessible
+- **Auto-fallback** - switches to text mode if GUI fails
 
 ## Troubleshooting
 

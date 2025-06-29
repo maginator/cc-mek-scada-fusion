@@ -14,40 +14,44 @@ local CONFIG_FILE = INSTALL_DIR .. "config.lua"
 local COMPONENTS = {
     ["server"] = {
         name = "SCADA Server Setup",
-        description = "Install central SCADA server for data collection and control",
+        description = "Install central SCADA server with GUI interface and error handling",
         files = {
-            {src = "scada_server.lua", dst = "scada_server.lua", startup = true},
+            {src = "scada_server_gui.lua", dst = "scada_server.lua", startup = true},
+            {src = "scada_gui.lua", dst = "scada_gui.lua", startup = false},
         },
         requirements = {
             "Wireless modem (any side)",
             "Central computer for SCADA network",
+            "Monitor optional (for GUI display)",
             "Start this component first"
         }
     },
     
     ["control"] = {
         name = "Control Station Setup", 
-        description = "Install operator interface with monitor and touch controls",
+        description = "Install operator interface with enhanced GUI and error handling",
         files = {
             {src = "scada_gui.lua", dst = "scada_gui.lua", startup = false},
-            {src = "scada_hmi.lua", dst = "scada_hmi.lua", startup = true},
+            {src = "scada_hmi_gui.lua", dst = "scada_hmi.lua", startup = true},
         },
         requirements = {
-            "Monitor (any side)",
+            "Monitor (any side) - required",
             "Wireless modem (any side)", 
-            "Advanced Computer recommended for touch controls"
+            "Advanced Computer recommended for touch controls",
+            "Enhanced GUI with error recovery"
         }
     },
     
     ["monitor"] = {
         name = "Monitor Station Setup",
-        description = "Install auto-detecting RTU for monitoring Mekanism equipment",
+        description = "Install auto-detecting RTU with GUI status display and error handling",
         files = {
-            {src = "universal_rtu.lua", dst = "universal_rtu.lua", startup = true},
+            {src = "universal_rtu_gui.lua", dst = "universal_rtu.lua", startup = true},
         },
         requirements = {
             "Cable modem connected to Mekanism devices",
             "Wireless modem for SCADA communication",
+            "Monitor optional (for status display)",
             "Automatically detects equipment type"
         }
     },
@@ -185,9 +189,9 @@ local COMPONENTS = {
             {src = "scada_gui.lua", dst = "scada_gui.lua"},
             {src = "scada_installer_gui_fixed.lua", dst = "scada_installer_gui_fixed.lua"},
             {src = "configurator_compact.lua", dst = "configurator_compact.lua"},
-            {src = "scada_server.lua", dst = "scada_server.lua"},
-            {src = "scada_hmi.lua", dst = "scada_hmi.lua"},
-            {src = "universal_rtu.lua", dst = "universal_rtu.lua"},
+            {src = "scada_server_gui.lua", dst = "scada_server.lua"},
+            {src = "scada_hmi_gui.lua", dst = "scada_hmi.lua"},
+            {src = "universal_rtu_gui.lua", dst = "universal_rtu.lua"},
             {src = "fusion_reactor_mon.lua", dst = "reactor_rtu.lua"},
             {src = "energy_storage.lua", dst = "energy_rtu.lua"},
             {src = "fuel_control.lua", dst = "fuel_rtu.lua"},
