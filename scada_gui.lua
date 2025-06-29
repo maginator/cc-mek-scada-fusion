@@ -52,6 +52,16 @@ function GUI:init(monitor)
     self.mouse_handlers = {}
     self.running = true
     
+    -- ComputerCraft typical dimensions: 51x19 (computer), 164x81 (3x3 monitor array)
+    -- Adjust scale based on screen size
+    if self.width > 100 then
+        self.scale = "large"    -- Large monitor setup
+    elseif self.width > 60 then
+        self.scale = "medium"   -- 2x2 monitor or large single
+    else
+        self.scale = "small"    -- Single computer/monitor
+    end
+    
     -- Set up initial state
     self.monitor.setBackgroundColor(self.COLORS.BG_DARK)
     self.monitor.clear()
