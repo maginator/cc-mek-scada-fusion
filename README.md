@@ -31,26 +31,42 @@ This system provides industrial-grade monitoring and control for Mekanism fusion
 
 ### Installation
 
-1. **Download the installer:**
+#### **🖥️ Modern Graphical Installer (Recommended)**
+
+1. **Download the universal installer:**
    ```lua
    pastebin get <pastebin-id> installer
    ```
 
-2. **Configure your system (recommended first step):**
+2. **Launch interactive installer:**
    ```lua
-   installer configure
-   configurator
+   installer
    ```
+   
+   The installer automatically detects your computer capabilities:
+   - **Advanced Computer + Monitor** → Modern GUI with mouse/touch controls
+   - **Standard Computer** → Enhanced command-line interface
+   
+3. **Follow the graphical wizard:**
+   - 🔍 **Hardware Scan** - Automatic detection of peripherals and Mekanism devices
+   - ⚙️ **Configuration** - Smart setup with auto-configuration options
+   - 📦 **Component Selection** - Visual component browser with categories
+   - 📊 **Installation Progress** - Real-time progress and status updates
 
-3. **Install components:**
-   ```lua
-   installer <component>
-   ```
+#### **⌨️ Command Line Installation (Advanced Users)**
+
+For direct component installation:
+```lua
+installer cli <component>    # Force CLI mode
+installer server            # Install specific component
+installer configure         # Configuration wizard only
+```
 
 ### Available Components
 
 | Component | Description | Purpose |
 |-----------|-------------|---------|
+| `gui` | **GUI Components** | **Modern graphical interface library** |
 | `configure` | Configuration Wizard | Interactive setup for custom configuration |
 | `server` | SCADA Server | Central data acquisition and control |
 | `hmi` | HMI Client | Operator interface with touchscreen |
@@ -62,19 +78,29 @@ This system provides industrial-grade monitoring and control for Mekanism fusion
 | `historian` | Data Historian | Historical data and trending |
 | `all` | Complete System | All components (dev/testing) |
 
-### Quick Setup (New Universal RTU)
+### Quick Setup Examples
 
-**Simple 3-Computer Setup:**
+#### **🖥️ Graphical Setup (Recommended)**
+
+1. **Any Computer with Advanced Computer + Monitor:**
+   ```lua
+   installer              # Launches GUI installer
+   ```
+   - Follow the visual wizard
+   - Hardware auto-detection
+   - Point-and-click component selection
+   - Integrated configuration
+
+#### **⚡ Quick 3-Computer Setup:**
 
 1. **Central Server Computer:**
    ```lua
-   installer configure    # Optional: custom configuration
-   installer server
+   installer server       # Or use GUI installer
    ```
 
 2. **Control Room Computer (with Monitor):**
    ```lua
-   installer hmi
+   installer hmi          # Enhanced GUI with touch controls
    ```
 
 3. **Any RTU Computer (connected to Mekanism devices):**

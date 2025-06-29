@@ -7,6 +7,21 @@ local GITHUB_BRANCH = "main"
 local BASE_URL = "https://raw.githubusercontent.com/" .. GITHUB_REPO .. "/" .. GITHUB_BRANCH .. "/"
 
 local COMPONENTS = {
+    ["gui"] = {
+        name = "GUI Components",
+        description = "Graphical user interface library and installer",
+        files = {
+            {src = "scada_gui.lua", dst = "scada_gui.lua", startup = false},
+            {src = "scada_installer_gui.lua", dst = "scada_installer_gui.lua", startup = false},
+            {src = "installer_new.lua", dst = "installer_gui.lua", startup = false},
+        },
+        requirements = {
+            "Advanced Computer required",
+            "Monitor recommended for best experience",
+            "Provides modern graphical interface"
+        }
+    },
+
     ["configure"] = {
         name = "Configuration Wizard",
         description = "Interactive setup wizard for SCADA components",
@@ -132,6 +147,9 @@ local COMPONENTS = {
         name = "Complete SCADA System",
         description = "Install all components (for testing/development)",
         files = {
+            {src = "scada_gui.lua", dst = "scada_gui.lua"},
+            {src = "scada_installer_gui.lua", dst = "scada_installer_gui.lua"},
+            {src = "installer_new.lua", dst = "installer_gui.lua"},
             {src = "configurator.lua", dst = "configurator.lua"},
             {src = "scada_server.lua", dst = "scada_server.lua"},
             {src = "scada_hmi.lua", dst = "scada_hmi.lua"},
