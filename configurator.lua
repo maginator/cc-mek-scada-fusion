@@ -139,53 +139,194 @@ function Configurator:classifyDevice(device_name)
     return "unknown"
 end
 
+function Configurator:drawBox(x, y, width, height, title, color)
+    color = color or colors.lightBlue
+    
+    -- Clear area
+    for row = 0, height - 1 do
+        term.setCursorPos(x, y + row)
+        term.setBackgroundColor(colors.black)
+        term.write(string.rep(" ", width))
+    end
+    
+    -- Draw borders
+    term.setBackgroundColor(color)
+    term.setTextColor(colors.white)
+    
+    -- Top border
+    term.setCursorPos(x, y)
+    term.write(string.rep(" ", width))
+    
+    -- Bottom border  
+    term.setCursorPos(x, y + height - 1)
+    term.write(string.rep(" ", width))
+    
+    -- Side borders
+    for row = 1, height - 2 do
+        term.setCursorPos(x, y + row)
+        term.write(" ")
+        term.setCursorPos(x + width - 1, y + row)
+        term.write(" ")
+    end
+    
+    -- Title
+    if title then
+        local title_text = " " .. title .. " "
+        term.setCursorPos(x + math.floor((width - #title_text) / 2), y)
+        term.setBackgroundColor(colors.cyan)
+        term.write(title_text)
+    end
+    
+    term.setBackgroundColor(colors.black)
+end
+
+function Configurator:showStatusIcon(status)
+    if status == "found" or status == "active" or status == "online" then
+        term.setTextColor(colors.green)
+        return "✓"
+    elseif status == "warning" or status == "partial" then
+        term.setTextColor(colors.orange)
+        return "⚠"
+    elseif status == "error" or status == "offline" then
+        term.setTextColor(colors.red)
+        return "✗"
+    else
+        term.setTextColor(colors.gray)
+        return "?"
+    end
+end
+
 function Configurator:showDetectedDevices()
-    print("=== DETECTING HARDWARE ===")
+    term.clear()
+    term.setCursorPos(1, 1)
+    
+    -- Header
+    term.setBackgroundColor(colors.blue)
+    term.setTextColor(colors.white)
+    term.write(string.rep(" ", 51))
+    term.setCursorPos(10, 1)
+    term.write("🔧 SCADA HARDWARE DETECTION WIZARD 🔧")
+    
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
     
     local peripherals = self:detectPeripherals()
     local devices = self:detectMekanismDevices()
     
-    print("Monitors found:")
-    for _, monitor in ipairs(peripherals.monitors) do
-        print("  - " .. monitor.side .. " (" .. monitor.type .. ")")
+    -- Monitors section
+    self:drawBox(2, 3, 24, 8, "MONITORS", colors.green)
+    
+    term.setCursorPos(4, 5)
+    if #peripherals.monitors > 0 then
+        term.write(self:showStatusIcon("found") .. " Monitors Found: " .. #peripherals.monitors)
+        local y_pos = 6
+        for _, monitor in ipairs(peripherals.monitors) do
+            if y_pos > 9 then break end
+            term.setCursorPos(6, y_pos)
+            term.setTextColor(colors.lightGray)
+            term.write("📺 " .. monitor.side)
+            y_pos = y_pos + 1
+        end
+    else
+        term.write(self:showStatusIcon("error") .. " No monitors detected")
     end
     
-    print("\nWireless Modems found:")
-    for _, modem in ipairs(peripherals.modems.wireless) do
-        print("  - " .. modem.side)
+    -- Modems section
+    self:drawBox(28, 3, 24, 8, "NETWORK", colors.blue)
+    
+    term.setCursorPos(30, 5)
+    local total_modems = #peripherals.modems.wireless + #peripherals.modems.cable
+    if total_modems > 0 then
+        term.write(self:showStatusIcon("found") .. " Modems Found: " .. total_modems)
+        
+        term.setCursorPos(32, 6)
+        term.setTextColor(colors.lightGray)
+        term.write("📡 Wireless: " .. #peripherals.modems.wireless)
+        
+        term.setCursorPos(32, 7)
+        term.write("🔌 Cable: " .. #peripherals.modems.cable)
+    else
+        term.write(self:showStatusIcon("error") .. " No modems detected")
     end
     
-    print("\nCable Modems found:")
-    for _, modem in ipairs(peripherals.modems.cable) do
-        print("  - " .. modem.side)
-    end
+    -- Mekanism devices section
+    self:drawBox(2, 12, 50, 10, "MEKANISM DEVICES", colors.purple)
     
-    print("\nMekanism Devices detected:")
+    local y_pos = 14
+    local has_devices = false
+    
     for category, device_list in pairs(devices) do
-        if #device_list > 0 then
-            print("  " .. category:upper() .. ":")
+        if category ~= "unknown" and #device_list > 0 then
+            has_devices = true
+            term.setCursorPos(4, y_pos)
+            term.write(self:showStatusIcon("found") .. " " .. category:upper() .. " (" .. #device_list .. ")")
+            y_pos = y_pos + 1
+            
             for _, device in ipairs(device_list) do
-                print("    - " .. device.name .. " (via " .. device.cable_side .. ")")
+                if y_pos > 20 then break end
+                term.setCursorPos(6, y_pos)
+                term.setTextColor(colors.lightGray)
+                
+                local icon = "⚙"
+                if category == "reactor" then icon = "⚡"
+                elseif category == "energy" then icon = "🔋"
+                elseif category == "fuel" then icon = "⛽"
+                elseif category == "laser" then icon = "🔫"
+                end
+                
+                term.write(icon .. " " .. device.name:sub(1, 30))
+                y_pos = y_pos + 1
             end
+            y_pos = y_pos + 1
         end
     end
+    
+    if not has_devices then
+        term.setCursorPos(4, 14)
+        term.write(self:showStatusIcon("warning") .. " No Mekanism devices detected")
+        term.setCursorPos(6, 15)
+        term.setTextColor(colors.yellow)
+        term.write("Check cable modem connections")
+    end
+    
+    -- Continue prompt
+    term.setCursorPos(2, 23)
+    term.setTextColor(colors.white)
+    term.write("Press [ENTER] to continue with configuration...")
     
     return peripherals, devices
 end
 
 function Configurator:configureNetwork()
-    print("\n=== NETWORK CONFIGURATION ===")
+    term.clear()
     
-    print("Current channel assignments:")
+    -- Network configuration screen
+    self:drawBox(5, 3, 42, 16, "NETWORK CONFIGURATION", colors.blue)
+    
+    term.setCursorPos(7, 5)
+    term.setTextColor(colors.white)
+    term.write("Current Channel Assignments:")
+    
+    local y_pos = 7
     for name, channel in pairs(self.config.network.channels) do
-        print("  " .. name .. ": " .. channel)
+        term.setCursorPos(9, y_pos)
+        term.setTextColor(colors.lightGray)
+        term.write("📡 " .. name:upper() .. ": ")
+        term.setTextColor(colors.cyan)
+        term.write("Channel " .. channel)
+        y_pos = y_pos + 1
     end
     
-    print("\nWould you like to change channel assignments? (y/N)")
+    term.setCursorPos(7, y_pos + 1)
+    term.setTextColor(colors.white)
+    term.write("Change channel assignments? (y/N): ")
+    
     local change_channels = read()
     
     if change_channels:lower() == "y" or change_channels:lower() == "yes" then
-        print("Enter new base channel (current base: 100):")
+        term.setCursorPos(7, y_pos + 3)
+        term.write("Enter new base channel (1-65000): ")
+        
         local base_channel = tonumber(read())
         
         if base_channel and base_channel > 0 and base_channel < 65000 then
@@ -198,10 +339,20 @@ function Configurator:configureNetwork()
                 alarm = base_channel + 5,
                 historian = base_channel + 6
             }
-            print("Channels updated!")
+            
+            term.setCursorPos(7, y_pos + 5)
+            term.setTextColor(colors.green)
+            term.write("✓ Channels updated successfully!")
         else
-            print("Invalid channel number, keeping defaults")
+            term.setCursorPos(7, y_pos + 5)
+            term.setTextColor(colors.red)
+            term.write("✗ Invalid channel, keeping defaults")
         end
+        
+        term.setCursorPos(7, 17)
+        term.setTextColor(colors.white)
+        term.write("Press [ENTER] to continue...")
+        read()
     end
 end
 
@@ -424,63 +575,298 @@ function Configurator:loadConfig()
 end
 
 function Configurator:showSummary()
-    print("\n=== CONFIGURATION SUMMARY ===")
-    print("Network Channels:")
+    term.clear()
+    
+    -- Summary header
+    term.setCursorPos(1, 1)
+    term.setBackgroundColor(colors.green)
+    term.setTextColor(colors.white)
+    term.write(string.rep(" ", 51))
+    term.setCursorPos(12, 1)
+    term.write("✓ CONFIGURATION SUMMARY ✓")
+    
+    term.setBackgroundColor(colors.black)
+    
+    -- Network section
+    self:drawBox(2, 3, 24, 10, "NETWORK", colors.blue)
+    
+    term.setCursorPos(4, 5)
+    term.setTextColor(colors.white)
+    term.write("Channel Assignments:")
+    
+    local y_pos = 6
     for name, channel in pairs(self.config.network.channels) do
-        print("  " .. name .. ": " .. channel)
+        if y_pos > 11 then break end
+        term.setCursorPos(4, y_pos)
+        term.setTextColor(colors.lightGray)
+        term.write(name:sub(1,8) .. ": " .. channel)
+        y_pos = y_pos + 1
     end
     
-    print("\nComponent IDs:")
+    -- Components section
+    self:drawBox(28, 3, 24, 10, "COMPONENTS", colors.purple)
+    
+    term.setCursorPos(30, 5)
+    term.setTextColor(colors.white)
+    term.write("Component IDs:")
+    
+    y_pos = 6
     for name, id in pairs(self.config.components) do
-        print("  " .. name .. ": " .. id)
+        if y_pos > 11 then break end
+        term.setCursorPos(30, y_pos)
+        term.setTextColor(colors.lightGray)
+        term.write(name:sub(1,10) .. ":")
+        term.setCursorPos(30, y_pos + 1)
+        term.write("  " .. id:sub(1,18))
+        y_pos = y_pos + 2
     end
     
+    -- RTU Configuration
     if self.config.rtu then
-        print("\nRTU Configuration:")
-        print("  Type: " .. (self.config.rtu.type or "auto-detect"))
-        print("  ID: " .. (self.config.rtu.id or "auto-generated"))
-        print("  Update Interval: " .. self.config.rtu.update_interval .. "s")
+        self:drawBox(2, 14, 24, 6, "RTU CONFIG", colors.orange)
+        
+        term.setCursorPos(4, 16)
+        term.setTextColor(colors.lightGray)
+        term.write("Type: " .. (self.config.rtu.type or "auto"))
+        
+        term.setCursorPos(4, 17)
+        term.write("Update: " .. self.config.rtu.update_interval .. "s")
+        
+        if self.config.rtu.id then
+            term.setCursorPos(4, 18)
+            term.write("ID: " .. self.config.rtu.id:sub(1,16))
+        end
     end
     
+    -- HMI Configuration
     if self.config.hmi then
-        print("\nHMI Configuration:")
-        print("  Monitor Side: " .. self.config.hmi.monitor_side)
-        print("  Screen Scale: " .. self.config.hmi.screen_scale)
+        self:drawBox(28, 14, 24, 6, "HMI CONFIG", colors.cyan)
+        
+        term.setCursorPos(30, 16)
+        term.setTextColor(colors.lightGray)
+        term.write("Monitor: " .. self.config.hmi.monitor_side)
+        
+        term.setCursorPos(30, 17)
+        term.write("Scale: " .. self.config.hmi.screen_scale)
+        
+        term.setCursorPos(30, 18)
+        term.write("Touch: " .. (self.config.hmi.touch_enabled and "Yes" or "No"))
     end
 end
 
+function Configurator:showMenu(title, options, current_selection)
+    current_selection = current_selection or 1
+    
+    term.clear()
+    term.setCursorPos(1, 1)
+    
+    -- Header
+    term.setBackgroundColor(colors.blue)
+    term.setTextColor(colors.white)
+    local header = "🔧 " .. title .. " 🔧"
+    local header_padding = math.floor((51 - #header) / 2)
+    term.write(string.rep(" ", 51))
+    term.setCursorPos(header_padding, 1)
+    term.write(header)
+    
+    term.setBackgroundColor(colors.black)
+    
+    -- Menu options
+    for i, option in ipairs(options) do
+        term.setCursorPos(5, 3 + i * 2)
+        
+        if i == current_selection then
+            term.setBackgroundColor(colors.lightBlue)
+            term.setTextColor(colors.white)
+            term.write(" ► " .. option.text .. string.rep(" ", 40 - #option.text))
+        else
+            term.setBackgroundColor(colors.black)
+            term.setTextColor(colors.lightGray)
+            term.write("   " .. option.text)
+        end
+    end
+    
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.setCursorPos(5, 3 + #options * 2 + 2)
+    term.write("Use ↑/↓ arrows to navigate, ENTER to select")
+    
+    return current_selection
+end
+
+function Configurator:getUserSelection(title, options)
+    local selection = 1
+    
+    while true do
+        selection = self:showMenu(title, options, selection)
+        
+        local event, key = os.pullEvent("key")
+        
+        if key == keys.up and selection > 1 then
+            selection = selection - 1
+        elseif key == keys.down and selection < #options then
+            selection = selection + 1
+        elseif key == keys.enter then
+            return selection, options[selection]
+        end
+    end
+end
+
+function Configurator:showProgress(title, steps, current_step)
+    term.clear()
+    term.setCursorPos(1, 1)
+    
+    -- Header
+    term.setBackgroundColor(colors.blue)
+    term.setTextColor(colors.white)
+    term.write(string.rep(" ", 51))
+    term.setCursorPos(10, 1)
+    term.write("🔧 " .. title .. " 🔧")
+    
+    term.setBackgroundColor(colors.black)
+    
+    -- Progress bar
+    local progress = math.floor((current_step / #steps) * 40)
+    term.setCursorPos(5, 3)
+    term.setTextColor(colors.white)
+    term.write("Progress: [")
+    
+    term.setTextColor(colors.green)
+    term.write(string.rep("█", progress))
+    
+    term.setTextColor(colors.gray)
+    term.write(string.rep("░", 40 - progress))
+    
+    term.setTextColor(colors.white)
+    term.write("] " .. current_step .. "/" .. #steps)
+    
+    -- Steps list
+    term.setCursorPos(5, 5)
+    term.write("Configuration Steps:")
+    
+    for i, step in ipairs(steps) do
+        term.setCursorPos(7, 6 + i)
+        
+        if i < current_step then
+            term.setTextColor(colors.green)
+            term.write("✓ " .. step)
+        elseif i == current_step then
+            term.setTextColor(colors.yellow)
+            term.write("► " .. step)
+        else
+            term.setTextColor(colors.gray)
+            term.write("  " .. step)
+        end
+    end
+    
+    term.setTextColor(colors.white)
+end
+
 function Configurator:run()
-    print("=== SCADA SYSTEM CONFIGURATOR ===")
-    print("Interactive setup for SCADA components\n")
+    term.clear()
+    
+    -- Welcome screen
+    self:drawBox(5, 5, 42, 12, "SCADA CONFIGURATOR", colors.blue)
+    
+    term.setCursorPos(7, 7)
+    term.setTextColor(colors.white)
+    term.write("Welcome to the SCADA System Configurator!")
+    
+    term.setCursorPos(7, 9)
+    term.setTextColor(colors.lightGray)
+    term.write("This wizard will help you configure:")
+    
+    term.setCursorPos(9, 11)
+    term.write("• Network settings and channels")
+    term.setCursorPos(9, 12)
+    term.write("• Hardware detection and setup")
+    term.setCursorPos(9, 13)
+    term.write("• Component identification")
+    term.setCursorPos(9, 14)
+    term.write("• System optimization")
+    
+    term.setCursorPos(7, 16)
+    term.setTextColor(colors.white)
+    term.write("Press [ENTER] to begin...")
+    
+    read()
+    
+    -- Configuration steps
+    local steps = {
+        "Hardware Detection",
+        "Network Configuration", 
+        "Component Setup",
+        "Final Review",
+        "Save Configuration"
+    }
     
     -- Load existing config if available
     self:loadConfig()
     
-    -- Detect hardware
+    -- Step 1: Hardware Detection
+    self:showProgress("CONFIGURING SYSTEM", steps, 1)
+    sleep(1)
     local peripherals, devices = self:showDetectedDevices()
-    
-    print("\nPress Enter to continue with configuration...")
     read()
     
-    -- Configure network
+    -- Step 2: Network Configuration
+    self:showProgress("CONFIGURING SYSTEM", steps, 2)
+    sleep(1)
     self:configureNetwork()
     
-    -- Configure components
+    -- Step 3: Component Setup
+    self:showProgress("CONFIGURING SYSTEM", steps, 3)
+    sleep(1)
     self:configureComponents(peripherals, devices)
     
-    -- Show summary
+    -- Step 4: Final Review
+    self:showProgress("CONFIGURING SYSTEM", steps, 4)
+    sleep(1)
     self:showSummary()
     
-    print("\nSave configuration? (Y/n)")
-    local save = read()
-    if save:lower() ~= "n" and save:lower() ~= "no" then
+    term.setCursorPos(2, 23)
+    term.setTextColor(colors.white)
+    term.write("Press [ENTER] to continue...")
+    read()
+    
+    -- Step 5: Save Configuration
+    self:showProgress("CONFIGURING SYSTEM", steps, 5)
+    sleep(1)
+    
+    local save_options = {
+        {text = "Save configuration and exit", value = "save"},
+        {text = "Exit without saving", value = "nosave"}
+    }
+    
+    local choice, selected = self:getUserSelection("SAVE CONFIGURATION", save_options)
+    
+    if selected.value == "save" then
         if self:saveConfig() then
-            print("\nConfiguration complete!")
-            print("You can now install and run SCADA components.")
-            print("Configuration file: " .. CONFIG_FILE)
+            term.clear()
+            self:drawBox(10, 8, 32, 8, "SUCCESS", colors.green)
+            
+            term.setCursorPos(12, 10)
+            term.setTextColor(colors.white)
+            term.write("✓ Configuration saved successfully!")
+            
+            term.setCursorPos(12, 12)
+            term.setTextColor(colors.lightGray)
+            term.write("File: " .. CONFIG_FILE)
+            
+            term.setCursorPos(12, 14)
+            term.setTextColor(colors.white)
+            term.write("You can now run SCADA components.")
+            
+            term.setCursorPos(12, 16)
+            term.write("Press any key to exit...")
+            
+            os.pullEvent("key")
         end
     else
-        print("Configuration not saved")
+        term.clear()
+        term.setCursorPos(1, 1)
+        term.setTextColor(colors.yellow)
+        print("Configuration not saved. Exiting...")
     end
 end
 

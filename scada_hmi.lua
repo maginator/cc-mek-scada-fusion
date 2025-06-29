@@ -46,7 +46,17 @@ local CONFIG = {
         CRITICAL = colors.purple,
         INACTIVE = colors.gray,
         BUTTON_ACTIVE = colors.blue,
-        BUTTON_INACTIVE = colors.gray
+        BUTTON_INACTIVE = colors.gray,
+        
+        -- Enhanced UI colors
+        ACCENT = colors.cyan,
+        PANEL_BG = colors.gray,
+        PANEL_BORDER = colors.lightGray,
+        VALUE_GOOD = colors.lime,
+        VALUE_CAUTION = colors.yellow,
+        VALUE_DANGER = colors.red,
+        SHADOW = colors.black,
+        HIGHLIGHT = colors.white
     },
     
     SCREENS = {
@@ -205,40 +215,83 @@ function HMI:getPercentage(current, max)
     return math.floor((current / max) * 100)
 end
 
-function HMI:drawProgressBar(x, y, width, percentage, color)
+function HMI:drawProgressBar(x, y, width, percentage, color, label)
+    -- Enhanced progress bar with borders and better styling
+    
+    -- Border frame
+    self.monitor.setBackgroundColor(CONFIG.COLORS.PANEL_BORDER)
+    self.monitor.setCursorPos(x-1, y-1)
+    self.monitor.write(string.rep(" ", width+2))
+    self.monitor.setCursorPos(x-1, y+1)
+    self.monitor.write(string.rep(" ", width+2))
+    
+    -- Side borders
+    self.monitor.setCursorPos(x-1, y)
+    self.monitor.write(" ")
+    self.monitor.setCursorPos(x+width, y)
+    self.monitor.write(" ")
+    
+    -- Background
     self.monitor.setCursorPos(x, y)
     self.monitor.setBackgroundColor(CONFIG.COLORS.INACTIVE)
     self.monitor.write(string.rep(" ", width))
     
+    -- Progress fill with gradient effect
     local filled = math.floor((percentage / 100) * width)
     if filled > 0 then
         self.monitor.setCursorPos(x, y)
         self.monitor.setBackgroundColor(color)
         self.monitor.write(string.rep(" ", filled))
+        
+        -- Add highlight effect
+        if filled > 1 then
+            self.monitor.setCursorPos(x, y)
+            self.monitor.setBackgroundColor(CONFIG.COLORS.HIGHLIGHT)
+            self.monitor.write(" ")
+        end
     end
     
+    -- Percentage text with better positioning
     self.monitor.setBackgroundColor(CONFIG.COLORS.BG)
-    self.monitor.setCursorPos(x + math.floor(width/2) - 1, y)
+    local text = percentage .. "%"
+    if label then
+        text = label .. ": " .. text
+    end
+    
+    self.monitor.setCursorPos(x + math.floor((width - #text) / 2), y)
     self.monitor.setTextColor(CONFIG.COLORS.TEXT)
-    self.monitor.write(percentage .. "%")
+    self.monitor.write(text)
 end
 
 function HMI:drawHeader()
     local w, h = self.monitor.getSize()
     
-    -- Header background
+    -- Enhanced header with gradient effect
     self.monitor.setBackgroundColor(CONFIG.COLORS.HEADER)
     self.monitor.setTextColor(CONFIG.COLORS.TEXT)
     self.monitor.setCursorPos(1, 1)
     self.monitor.write(string.rep(" ", w))
     
-    -- Title
-    local title = "SCADA HMI - MEKANISM FUSION REACTOR SYSTEM"
-    self.monitor.setCursorPos(math.floor((w - #title) / 2) + 1, 1)
+    -- Add shadow line
+    self.monitor.setBackgroundColor(CONFIG.COLORS.SHADOW)
+    self.monitor.setCursorPos(1, 2)
+    self.monitor.write(string.rep(" ", w))
+    
+    -- Title with enhanced styling
+    local title = "╔═══ SCADA HMI - MEKANISM FUSION REACTOR ═══╗"
+    self.monitor.setCursorPos(math.max(1, math.floor((w - #title) / 2) + 1), 1)
+    self.monitor.setBackgroundColor(CONFIG.COLORS.HEADER)
+    self.monitor.setTextColor(CONFIG.COLORS.ACCENT)
     self.monitor.write(title)
     
-    -- Connection status
-    local conn_status = self.connected_to_server and "CONNECTED" or "DISCONNECTED"
+    -- System time
+    local time_str = textutils.formatTime(os.time(), false)
+    self.monitor.setCursorPos(2, 1)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    self.monitor.write(time_str)
+    
+    -- Connection status with indicator
+    local conn_status = self.connected_to_server and "● ONLINE" or "● OFFLINE"
     local conn_color = self.connected_to_server and CONFIG.COLORS.SUCCESS or CONFIG.COLORS.ERROR
     self.monitor.setCursorPos(w - #conn_status - 1, 1)
     self.monitor.setTextColor(conn_color)
@@ -249,128 +302,205 @@ end
 
 function HMI:drawNavigation()
     local w, h = self.monitor.getSize()
-    local nav_y = 3
+    local nav_y = 4
     
-    -- Clear navigation area
+    -- Enhanced navigation with better styling
     self.monitor.setCursorPos(1, nav_y)
-    self.monitor.setBackgroundColor(CONFIG.COLORS.BG)
+    self.monitor.setBackgroundColor(CONFIG.COLORS.PANEL_BG)
     self.monitor.write(string.rep(" ", w))
     
-    -- Navigation buttons
+    -- Navigation buttons with icons
     local buttons = {
-        {name = "OVERVIEW", screen = CONFIG.SCREENS.OVERVIEW},
-        {name = "REACTOR", screen = CONFIG.SCREENS.REACTOR},
-        {name = "FUEL", screen = CONFIG.SCREENS.FUEL},
-        {name = "ENERGY", screen = CONFIG.SCREENS.ENERGY},
-        {name = "LASER", screen = CONFIG.SCREENS.LASER},
-        {name = "ALARMS", screen = CONFIG.SCREENS.ALARMS}
+        {name = "⌂ OVERVIEW", screen = CONFIG.SCREENS.OVERVIEW, icon = "⌂"},
+        {name = "⚡ REACTOR", screen = CONFIG.SCREENS.REACTOR, icon = "⚡"},
+        {name = "⛽ FUEL", screen = CONFIG.SCREENS.FUEL, icon = "⛽"},
+        {name = "🔋 ENERGY", screen = CONFIG.SCREENS.ENERGY, icon = "🔋"},
+        {name = "🔫 LASER", screen = CONFIG.SCREENS.LASER, icon = "🔫"},
+        {name = "⚠ ALARMS", screen = CONFIG.SCREENS.ALARMS, icon = "⚠"}
     }
     
     local x_pos = 2
     self.buttons = {}
     
     for _, button in ipairs(buttons) do
-        local color = (button.screen == self.current_screen) and CONFIG.COLORS.BUTTON_ACTIVE or CONFIG.COLORS.BUTTON_INACTIVE
+        local is_active = (button.screen == self.current_screen)
+        local bg_color = is_active and CONFIG.COLORS.BUTTON_ACTIVE or CONFIG.COLORS.BUTTON_INACTIVE
+        local text_color = is_active and CONFIG.COLORS.TEXT or CONFIG.COLORS.INACTIVE
         
+        -- Button background with border effect
         self.monitor.setCursorPos(x_pos, nav_y)
-        self.monitor.setBackgroundColor(color)
-        self.monitor.setTextColor(CONFIG.COLORS.TEXT)
-        self.monitor.write(" " .. button.name .. " ")
+        self.monitor.setBackgroundColor(bg_color)
+        self.monitor.setTextColor(text_color)
+        
+        local button_text = " " .. button.name .. " "
+        self.monitor.write(button_text)
+        
+        -- Active indicator
+        if is_active then
+            self.monitor.setCursorPos(x_pos, nav_y + 1)
+            self.monitor.setBackgroundColor(CONFIG.COLORS.ACCENT)
+            self.monitor.write(string.rep(" ", #button_text))
+        end
         
         -- Store button coordinates for touch handling
         table.insert(self.buttons, {
             x1 = x_pos,
-            x2 = x_pos + #button.name + 1,
+            x2 = x_pos + #button_text - 1,
             y = nav_y,
             action = function() self.current_screen = button.screen end
         })
         
-        x_pos = x_pos + #button.name + 3
+        x_pos = x_pos + #button_text + 1
     end
     
     self.monitor.setBackgroundColor(CONFIG.COLORS.BG)
 end
 
+function HMI:drawPanel(x, y, width, height, title, bg_color)
+    bg_color = bg_color or CONFIG.COLORS.PANEL_BG
+    
+    -- Panel background
+    for row = 0, height - 1 do
+        self.monitor.setCursorPos(x, y + row)
+        self.monitor.setBackgroundColor(bg_color)
+        self.monitor.write(string.rep(" ", width))
+    end
+    
+    -- Panel border
+    self.monitor.setBackgroundColor(CONFIG.COLORS.PANEL_BORDER)
+    -- Top border
+    self.monitor.setCursorPos(x, y)
+    self.monitor.write(string.rep(" ", width))
+    -- Bottom border
+    self.monitor.setCursorPos(x, y + height - 1)
+    self.monitor.write(string.rep(" ", width))
+    -- Side borders
+    for row = 1, height - 2 do
+        self.monitor.setCursorPos(x, y + row)
+        self.monitor.write(" ")
+        self.monitor.setCursorPos(x + width - 1, y + row)
+        self.monitor.write(" ")
+    end
+    
+    -- Panel title
+    if title then
+        local title_text = " " .. title .. " "
+        self.monitor.setCursorPos(x + math.floor((width - #title_text) / 2), y)
+        self.monitor.setBackgroundColor(CONFIG.COLORS.ACCENT)
+        self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+        self.monitor.write(title_text)
+    end
+end
+
+function HMI:drawStatusIndicator(x, y, status, label)
+    local status_char = "●"
+    local color = CONFIG.COLORS.INACTIVE
+    
+    if status == "RUNNING" or status == "ONLINE" or status == "ACTIVE" then
+        color = CONFIG.COLORS.VALUE_GOOD
+    elseif status == "HEATING" or status == "WARNING" or status == "STANDBY" then
+        color = CONFIG.COLORS.VALUE_CAUTION
+    elseif status == "ERROR" or status == "OFFLINE" or status == "CRITICAL" then
+        color = CONFIG.COLORS.VALUE_DANGER
+    end
+    
+    self.monitor.setCursorPos(x, y)
+    self.monitor.setBackgroundColor(CONFIG.COLORS.BG)
+    self.monitor.setTextColor(color)
+    self.monitor.write(status_char)
+    
+    if label then
+        self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+        self.monitor.write(" " .. label)
+    end
+end
+
 function HMI:drawOverviewScreen()
     local w, h = self.monitor.getSize()
     
-    -- System status overview
-    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
-    self.monitor.setCursorPos(2, 5)
-    self.monitor.write("SYSTEM OVERVIEW")
+    -- Enhanced layout with panels
     
-    -- Reactor status
+    -- Main status panel
+    self:drawPanel(2, 6, 30, 8, "REACTOR STATUS")
+    
     local reactor_status = self.data.reactor.status or "UNKNOWN"
-    local status_color = CONFIG.COLORS.INACTIVE
-    if reactor_status == "RUNNING" then
-        status_color = CONFIG.COLORS.SUCCESS
-    elseif reactor_status == "HEATING" then
-        status_color = CONFIG.COLORS.WARNING
-    elseif reactor_status == "ERROR" then
-        status_color = CONFIG.COLORS.ERROR
-    end
+    self:drawStatusIndicator(4, 8, reactor_status, "Reactor: " .. reactor_status)
     
-    self.monitor.setCursorPos(2, 7)
-    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
-    self.monitor.write("Reactor Status:")
-    self.monitor.setCursorPos(18, 7)
-    self.monitor.setTextColor(status_color)
-    self.monitor.write(reactor_status)
-    
-    -- Temperature
-    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
-    self.monitor.setCursorPos(2, 8)
+    -- Temperature with enhanced display
     local temp = self.data.reactor.temperature or 0
     local maxTemp = self.data.reactor.maxTemperature or 100000000
-    self.monitor.write("Temperature: " .. self:formatNumber(temp) .. "K")
-    
     local tempPercent = self:getPercentage(temp, maxTemp)
-    local tempColor = CONFIG.COLORS.SUCCESS
+    local tempColor = CONFIG.COLORS.VALUE_GOOD
     if tempPercent > 80 then
-        tempColor = CONFIG.COLORS.CRITICAL
+        tempColor = CONFIG.COLORS.VALUE_DANGER
     elseif tempPercent > 60 then
-        tempColor = CONFIG.COLORS.WARNING
+        tempColor = CONFIG.COLORS.VALUE_CAUTION
     end
-    self:drawProgressBar(2, 9, 30, tempPercent, tempColor)
     
-    -- Energy
-    self.monitor.setCursorPos(35, 7)
+    self.monitor.setCursorPos(4, 10)
     self.monitor.setTextColor(CONFIG.COLORS.TEXT)
-    local energyPercent = self.data.energy.percentage or 0
-    self.monitor.write("Energy Storage: " .. math.floor(energyPercent) .. "%")
-    self:drawProgressBar(35, 8, 25, energyPercent, CONFIG.COLORS.SUCCESS)
+    self.monitor.write("🌡 Temperature: " .. self:formatNumber(temp) .. "K")
+    self:drawProgressBar(4, 11, 26, tempPercent, tempColor, "TEMP")
     
-    -- Fuel levels
-    self.monitor.setCursorPos(2, 11)
-    self.monitor.write("Fuel Levels:")
+    -- Energy panel
+    self:drawPanel(34, 6, 26, 8, "ENERGY STORAGE")
+    
+    local energyPercent = self.data.energy.percentage or 0
+    local energy_current = self.data.energy.current or 0
+    local energy_max = self.data.energy.max or 1
+    
+    self.monitor.setCursorPos(36, 8)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    self.monitor.write("🔋 Storage: " .. math.floor(energyPercent) .. "%")
+    
+    self.monitor.setCursorPos(36, 9)
+    self.monitor.write(self:formatNumber(energy_current) .. "/" .. self:formatNumber(energy_max) .. " FE")
+    self:drawProgressBar(36, 11, 22, energyPercent, CONFIG.COLORS.VALUE_GOOD, "PWR")
+    
+    -- Fuel panel
+    self:drawPanel(2, 15, 28, 7, "FUEL LEVELS")
     
     local deuterium = self.data.fuel.deuterium or 0
     local maxDeuterium = self.data.fuel.maxDeuterium or 1000
     local deutPercent = self:getPercentage(deuterium, maxDeuterium)
     
-    self.monitor.setCursorPos(2, 12)
-    self.monitor.write("Deuterium: " .. math.floor(deutPercent) .. "%")
-    self:drawProgressBar(2, 13, 20, deutPercent, CONFIG.COLORS.SUCCESS)
+    local tritium = self.data.fuel.tritium or 0
+    local maxTritium = self.data.fuel.maxTritium or 1000
+    local tritPercent = self:getPercentage(tritium, maxTritium)
     
-    -- Alarms summary
-    self.monitor.setCursorPos(35, 11)
-    self.monitor.write("Active Alarms: " .. #self.data.alarms)
+    self.monitor.setCursorPos(4, 17)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    self.monitor.write("⚒ Deuterium: " .. math.floor(deutPercent) .. "%")
+    self:drawProgressBar(4, 18, 24, deutPercent, CONFIG.COLORS.VALUE_GOOD)
     
-    if #self.data.alarms > 0 then
-        local alarm_y = 12
+    self.monitor.setCursorPos(4, 19)
+    self.monitor.write("☢ Tritium: " .. math.floor(tritPercent) .. "%")
+    self:drawProgressBar(4, 20, 24, tritPercent, CONFIG.COLORS.VALUE_GOOD)
+    
+    -- Alarms panel
+    self:drawPanel(32, 15, 28, 7, "SYSTEM ALERTS")
+    
+    local alarm_count = #self.data.alarms
+    self.monitor.setCursorPos(34, 17)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    
+    if alarm_count == 0 then
+        self:drawStatusIndicator(34, 17, "ONLINE", "All Systems Normal")
+    else
+        self:drawStatusIndicator(34, 17, "WARNING", alarm_count .. " Active Alarms")
+        
+        local alarm_y = 18
         for i, alarm in ipairs(self.data.alarms) do
-            if i > 3 then break end -- Show only first 3 alarms
+            if i > 3 then break end
             
-            local color = CONFIG.COLORS.WARNING
+            local color = CONFIG.COLORS.VALUE_CAUTION
             if alarm.severity == "CRITICAL" then
-                color = CONFIG.COLORS.CRITICAL
-            elseif alarm.severity == "ERROR" then
-                color = CONFIG.COLORS.ERROR
+                color = CONFIG.COLORS.VALUE_DANGER
             end
             
-            self.monitor.setCursorPos(35, alarm_y)
+            self.monitor.setCursorPos(36, alarm_y)
             self.monitor.setTextColor(color)
-            self.monitor.write(alarm.id)
+            self.monitor.write("⚠ " .. (alarm.id or "Unknown"))
             alarm_y = alarm_y + 1
         end
     end
@@ -379,58 +509,255 @@ function HMI:drawOverviewScreen()
     self:drawControlButtons()
 end
 
+function HMI:drawButton(x, y, width, text, bg_color, text_color, action)
+    -- Enhanced button with 3D effect
+    text_color = text_color or CONFIG.COLORS.TEXT
+    
+    -- Button shadow
+    self.monitor.setCursorPos(x + 1, y + 1)
+    self.monitor.setBackgroundColor(CONFIG.COLORS.SHADOW)
+    self.monitor.write(string.rep(" ", width))
+    
+    -- Button background
+    self.monitor.setCursorPos(x, y)
+    self.monitor.setBackgroundColor(bg_color)
+    self.monitor.write(string.rep(" ", width))
+    
+    -- Button highlight
+    self.monitor.setCursorPos(x, y)
+    self.monitor.setBackgroundColor(CONFIG.COLORS.HIGHLIGHT)
+    self.monitor.write(" ")
+    
+    -- Button text
+    local text_x = x + math.floor((width - #text) / 2)
+    self.monitor.setCursorPos(text_x, y)
+    self.monitor.setBackgroundColor(bg_color)
+    self.monitor.setTextColor(text_color)
+    self.monitor.write(text)
+    
+    -- Store button for touch handling
+    if action then
+        table.insert(self.buttons, {
+            x1 = x, x2 = x + width - 1, y = y,
+            action = action
+        })
+    end
+end
+
 function HMI:drawControlButtons()
     local w, h = self.monitor.getSize()
     
-    -- Emergency SCRAM button
-    self.monitor.setBackgroundColor(CONFIG.COLORS.ERROR)
-    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
-    self.monitor.setCursorPos(2, h-5)
-    self.monitor.write(" EMERGENCY SCRAM ")
+    -- Control panel background
+    self:drawPanel(2, h-8, w-2, 7, "REACTOR CONTROLS")
     
-    table.insert(self.buttons, {
-        x1 = 2, x2 = 18, y = h-5,
-        action = function() self:sendCommand("reactor_scram") end
-    })
+    -- Emergency SCRAM button (prominent)
+    self:drawButton(4, h-6, 18, "⚠ EMERGENCY SCRAM", CONFIG.COLORS.ERROR, CONFIG.COLORS.TEXT, 
+        function() self:sendCommand("reactor_scram") end)
     
     -- Reactor control buttons
-    self.monitor.setBackgroundColor(CONFIG.COLORS.SUCCESS)
-    self.monitor.setCursorPos(2, h-3)
-    self.monitor.write(" START REACTOR ")
+    local reactor_running = (self.data.reactor.status == "RUNNING")
     
-    table.insert(self.buttons, {
-        x1 = 2, x2 = 16, y = h-3,
-        action = function() self:sendCommand("reactor_start") end
-    })
+    if not reactor_running then
+        self:drawButton(4, h-4, 14, "▶ START REACTOR", CONFIG.COLORS.SUCCESS, CONFIG.COLORS.TEXT,
+            function() self:sendCommand("reactor_start") end)
+    else
+        self:drawButton(4, h-4, 14, "■ STOP REACTOR", CONFIG.COLORS.WARNING, CONFIG.COLORS.TEXT,
+            function() self:sendCommand("reactor_stop") end)
+    end
     
-    self.monitor.setBackgroundColor(CONFIG.COLORS.WARNING)
-    self.monitor.setCursorPos(18, h-3)
-    self.monitor.write(" STOP REACTOR ")
+    -- Laser control buttons
+    local laser_active = (self.data.laser.status == "ACTIVE")
     
-    table.insert(self.buttons, {
-        x1 = 18, x2 = 31, y = h-3,
-        action = function() self:sendCommand("reactor_stop") end
-    })
+    if not laser_active then
+        self:drawButton(20, h-4, 12, "🔫 LASER ON", CONFIG.COLORS.BUTTON_ACTIVE, CONFIG.COLORS.TEXT,
+            function() self:sendCommand("laser_activate") end)
+    else
+        self:drawButton(20, h-4, 12, "🔫 LASER OFF", CONFIG.COLORS.BUTTON_INACTIVE, CONFIG.COLORS.TEXT,
+            function() self:sendCommand("laser_deactivate") end)
+    end
     
-    -- Laser control
-    self.monitor.setBackgroundColor(CONFIG.COLORS.BUTTON_ACTIVE)
-    self.monitor.setCursorPos(35, h-3)
-    self.monitor.write(" LASER ON ")
+    -- Additional controls
+    self:drawButton(34, h-4, 12, "🔄 REFRESH", CONFIG.COLORS.BUTTON_INACTIVE, CONFIG.COLORS.TEXT,
+        function() self:requestData() end)
     
-    table.insert(self.buttons, {
-        x1 = 35, x2 = 45, y = h-3,
-        action = function() self:sendCommand("laser_activate") end
-    })
-    
-    self.monitor.setCursorPos(47, h-3)
-    self.monitor.write(" LASER OFF ")
-    
-    table.insert(self.buttons, {
-        x1 = 47, x2 = 58, y = h-3,
-        action = function() self:sendCommand("laser_deactivate") end
-    })
+    self:drawButton(48, h-4, 10, "⚙ CONFIG", CONFIG.COLORS.BUTTON_INACTIVE, CONFIG.COLORS.TEXT,
+        function() 
+            -- Launch configurator
+            shell.run("configurator")
+        end)
     
     self.monitor.setBackgroundColor(CONFIG.COLORS.BG)
+end
+
+-- Additional screen implementations
+function HMI:drawReactorScreen()
+    local w, h = self.monitor.getSize()
+    
+    -- Reactor details panel
+    self:drawPanel(2, 6, w-2, h-12, "REACTOR DETAILS")
+    
+    local temp = self.data.reactor.temperature or 0
+    local maxTemp = self.data.reactor.maxTemperature or 100000000
+    local tempPercent = self:getPercentage(temp, maxTemp)
+    
+    self.monitor.setCursorPos(4, 8)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    self.monitor.write("🌡 Core Temperature: " .. self:formatNumber(temp) .. "K / " .. self:formatNumber(maxTemp) .. "K")
+    self:drawProgressBar(4, 9, w-6, tempPercent, 
+        tempPercent > 80 and CONFIG.COLORS.VALUE_DANGER or 
+        tempPercent > 60 and CONFIG.COLORS.VALUE_CAUTION or CONFIG.COLORS.VALUE_GOOD)
+    
+    -- Plasma temperature
+    local plasmaTemp = self.data.reactor.plasmaTemperature or 0
+    self.monitor.setCursorPos(4, 11)
+    self.monitor.write("⚡ Plasma Temperature: " .. self:formatNumber(plasmaTemp) .. "K")
+    
+    -- Injection rate
+    local injectionRate = self.data.reactor.injectionRate or 0
+    self.monitor.setCursorPos(4, 13)
+    self.monitor.write("💉 Injection Rate: " .. injectionRate .. " mB/t")
+    
+    -- Production rate
+    local productionRate = self.data.reactor.productionRate or 0
+    self.monitor.setCursorPos(4, 15)
+    self.monitor.write("⚡ Energy Production: " .. self:formatNumber(productionRate) .. " FE/t")
+    
+    self:drawControlButtons()
+end
+
+function HMI:drawFuelScreen()
+    local w, h = self.monitor.getSize()
+    
+    -- Fuel status panel
+    self:drawPanel(2, 6, w-2, h-12, "FUEL SYSTEM STATUS")
+    
+    -- Deuterium
+    local deuterium = self.data.fuel.deuterium or 0
+    local maxDeuterium = self.data.fuel.maxDeuterium or 1000
+    local deutPercent = self:getPercentage(deuterium, maxDeuterium)
+    
+    self.monitor.setCursorPos(4, 8)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    self.monitor.write("⚛ Deuterium Tank: " .. self:formatNumber(deuterium) .. " / " .. self:formatNumber(maxDeuterium) .. " mB")
+    self:drawProgressBar(4, 9, w-6, deutPercent, CONFIG.COLORS.VALUE_GOOD)
+    
+    -- Tritium
+    local tritium = self.data.fuel.tritium or 0
+    local maxTritium = self.data.fuel.maxTritium or 1000
+    local tritPercent = self:getPercentage(tritium, maxTritium)
+    
+    self.monitor.setCursorPos(4, 11)
+    self.monitor.write("☢ Tritium Tank: " .. self:formatNumber(tritium) .. " / " .. self:formatNumber(maxTritium) .. " mB")
+    self:drawProgressBar(4, 12, w-6, tritPercent, CONFIG.COLORS.VALUE_GOOD)
+    
+    -- Fuel consumption
+    local fuelConsumption = self.data.fuel.consumptionRate or 0
+    self.monitor.setCursorPos(4, 14)
+    self.monitor.write("🔥 Fuel Consumption: " .. fuelConsumption .. " mB/t")
+    
+    self:drawControlButtons()
+end
+
+function HMI:drawEnergyScreen()
+    local w, h = self.monitor.getSize()
+    
+    -- Energy system panel
+    self:drawPanel(2, 6, w-2, h-12, "ENERGY STORAGE SYSTEM")
+    
+    local energyPercent = self.data.energy.percentage or 0
+    local energy_current = self.data.energy.current or 0
+    local energy_max = self.data.energy.max or 1
+    local energy_input = self.data.energy.input or 0
+    local energy_output = self.data.energy.output or 0
+    
+    self.monitor.setCursorPos(4, 8)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    self.monitor.write("🔋 Energy Storage: " .. self:formatNumber(energy_current) .. " / " .. self:formatNumber(energy_max) .. " FE")
+    self:drawProgressBar(4, 9, w-6, energyPercent, CONFIG.COLORS.VALUE_GOOD)
+    
+    self.monitor.setCursorPos(4, 11)
+    self.monitor.write("📈 Input Rate: " .. self:formatNumber(energy_input) .. " FE/t")
+    
+    self.monitor.setCursorPos(4, 12)
+    self.monitor.write("📉 Output Rate: " .. self:formatNumber(energy_output) .. " FE/t")
+    
+    local net_rate = energy_input - energy_output
+    self.monitor.setCursorPos(4, 14)
+    self.monitor.setTextColor(net_rate >= 0 and CONFIG.COLORS.VALUE_GOOD or CONFIG.COLORS.VALUE_CAUTION)
+    self.monitor.write("💹 Net Rate: " .. (net_rate >= 0 and "+" or "") .. self:formatNumber(net_rate) .. " FE/t")
+    
+    self:drawControlButtons()
+end
+
+function HMI:drawLaserScreen()
+    local w, h = self.monitor.getSize()
+    
+    -- Laser system panel
+    self:drawPanel(2, 6, w-2, h-12, "LASER AMPLIFICATION SYSTEM")
+    
+    local laser_energy = self.data.laser.energy or 0
+    local laser_max = self.data.laser.maxEnergy or 1000000000
+    local laser_percent = self:getPercentage(laser_energy, laser_max)
+    
+    self.monitor.setCursorPos(4, 8)
+    self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+    self.monitor.write("🔫 Laser Energy: " .. self:formatNumber(laser_energy) .. " / " .. self:formatNumber(laser_max) .. " J")
+    self:drawProgressBar(4, 9, w-6, laser_percent, CONFIG.COLORS.VALUE_GOOD)
+    
+    local laser_status = self.data.laser.status or "OFFLINE"
+    self:drawStatusIndicator(4, 11, laser_status, "Laser Status: " .. laser_status)
+    
+    -- Laser array status
+    local laser_count = self.data.laser.count or 0
+    self.monitor.setCursorPos(4, 13)
+    self.monitor.write("🔧 Active Lasers: " .. laser_count)
+    
+    self:drawControlButtons()
+end
+
+function HMI:drawAlarmsScreen()
+    local w, h = self.monitor.getSize()
+    
+    -- Alarms panel
+    self:drawPanel(2, 6, w-2, h-12, "SYSTEM ALARMS & ALERTS")
+    
+    local alarms = self.data.alarms or {}
+    
+    if #alarms == 0 then
+        self.monitor.setCursorPos(4, 8)
+        self:drawStatusIndicator(4, 8, "ONLINE", "All Systems Operating Normally")
+    else
+        local y_pos = 8
+        for i, alarm in ipairs(alarms) do
+            if y_pos > h - 8 then break end
+            
+            local color = CONFIG.COLORS.VALUE_CAUTION
+            local icon = "⚠"
+            
+            if alarm.severity == "CRITICAL" then
+                color = CONFIG.COLORS.VALUE_DANGER
+                icon = "🚨"
+            elseif alarm.severity == "ERROR" then
+                color = CONFIG.COLORS.VALUE_DANGER
+                icon = "❌"
+            end
+            
+            self.monitor.setCursorPos(4, y_pos)
+            self.monitor.setTextColor(color)
+            self.monitor.write(icon .. " " .. (alarm.id or "Unknown Alarm"))
+            
+            if alarm.message then
+                self.monitor.setCursorPos(6, y_pos + 1)
+                self.monitor.setTextColor(CONFIG.COLORS.TEXT)
+                self.monitor.write(alarm.message)
+                y_pos = y_pos + 2
+            else
+                y_pos = y_pos + 1
+            end
+        end
+    end
+    
+    self:drawControlButtons()
 end
 
 function HMI:handleTouch(x, y)
@@ -452,8 +779,21 @@ function HMI:render()
     self:drawHeader()
     self:drawNavigation()
     
+    -- Draw screen-specific content
+    self.monitor.setBackgroundColor(CONFIG.COLORS.BG)
+    
     if self.current_screen == CONFIG.SCREENS.OVERVIEW then
         self:drawOverviewScreen()
+    elseif self.current_screen == CONFIG.SCREENS.REACTOR then
+        self:drawReactorScreen()
+    elseif self.current_screen == CONFIG.SCREENS.FUEL then
+        self:drawFuelScreen()
+    elseif self.current_screen == CONFIG.SCREENS.ENERGY then
+        self:drawEnergyScreen()
+    elseif self.current_screen == CONFIG.SCREENS.LASER then
+        self:drawLaserScreen()
+    elseif self.current_screen == CONFIG.SCREENS.ALARMS then
+        self:drawAlarmsScreen()
     end
     
     -- Connection timeout check
