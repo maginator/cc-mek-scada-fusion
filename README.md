@@ -44,7 +44,7 @@ This system provides industrial-grade monitoring and control for Mekanism fusion
    ```
    
    The installer automatically detects your computer capabilities:
-   - **Advanced Computer + Monitor** → Modern GUI with mouse/touch controls
+   - **Advanced Computer + Monitor** → Modern GUI with mouse/touch controls (optimized for 51x19 screens)
    - **Standard Computer** → Enhanced command-line interface
    
 3. **Follow the graphical wizard:**

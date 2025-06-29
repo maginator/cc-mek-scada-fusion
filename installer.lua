@@ -12,13 +12,14 @@ local COMPONENTS = {
         description = "Graphical user interface library and installer",
         files = {
             {src = "scada_gui.lua", dst = "scada_gui.lua", startup = false},
-            {src = "scada_installer_gui.lua", dst = "scada_installer_gui.lua", startup = false},
-            {src = "installer_new.lua", dst = "installer_gui.lua", startup = false},
+            {src = "scada_installer_gui_fixed.lua", dst = "scada_installer_gui_fixed.lua", startup = false},
+            {src = "configurator_compact.lua", dst = "configurator_compact.lua", startup = false},
+            {src = "installer_gui_auto.lua", dst = "installer_gui.lua", startup = false},
         },
         requirements = {
             "Advanced Computer required",
             "Monitor recommended for best experience",
-            "Provides modern graphical interface"
+            "Optimized for ComputerCraft screen dimensions (51x19)"
         }
     },
 
@@ -26,11 +27,12 @@ local COMPONENTS = {
         name = "Configuration Wizard",
         description = "Interactive setup wizard for SCADA components",
         files = {
-            {src = "configurator.lua", dst = "configurator.lua", startup = false},
+            {src = "configurator_compact.lua", dst = "configurator.lua", startup = false},
         },
         requirements = {
             "Run this first to configure your SCADA system",
-            "Detects hardware and sets up component configuration"
+            "Detects hardware and sets up component configuration",
+            "Optimized for ComputerCraft screen dimensions"
         }
     },
 
