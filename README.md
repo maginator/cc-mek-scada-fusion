@@ -29,86 +29,80 @@ This system provides industrial-grade monitoring and control for Mekanism fusion
 
 ## Quick Start
 
-### Installation
+### ⚡ Super Simple Installation (Recommended)
 
-#### **🖥️ Modern Graphical Installer (Recommended)**
-
-1. **Download the universal installer:**
+1. **Download the installer:**
    ```lua
    pastebin get <pastebin-id> installer
    ```
 
-2. **Launch interactive installer:**
+2. **Run the installer:**
    ```lua
    installer
    ```
-   
-   The installer automatically detects your computer capabilities:
-   - **Advanced Computer + Monitor** → Modern GUI with mouse/touch controls (optimized for 51x19 screens)
-   - **Standard Computer** → Enhanced command-line interface
-   
-3. **Follow the graphical wizard:**
-   - 🔍 **Hardware Scan** - Automatic detection of peripherals and Mekanism devices
-   - ⚙️ **Configuration** - Smart setup with auto-configuration options
-   - 📦 **Component Selection** - Visual component browser with categories
-   - 📊 **Installation Progress** - Real-time progress and status updates
 
-#### **⌨️ Command Line Installation (Advanced Users)**
+3. **Choose Quick Setup:**
+   - The installer automatically detects your hardware
+   - Determines the best SCADA role for this computer
+   - Installs and configures everything automatically
+   - **That's it!** Your SCADA system is ready to use.
 
-For direct component installation:
+### Installation Workflows
+
+When you run `installer`, you get three options:
+
+#### **🚀 Quick Setup (Recommended)**
+- **Automatic hardware detection** - scans for monitors, modems, and Mekanism devices
+- **Smart role assignment** - determines if this should be Server, Control Station, or Monitor
+- **Zero configuration** - sets up everything with optimal defaults
+- **One-click installation** - just confirm and you're done!
+
+#### **📱 Graphical Installer**
+- **Visual interface** with mouse/touch controls
+- **Interactive component browser** - see what each component does
+- **Hardware scan visualization** - graphical display of detected equipment
+- **Progress tracking** - real-time installation progress
+
+#### **⚙️ Advanced Setup**
+- **Manual component selection** - choose exactly what to install
+- **Custom configuration** - modify network channels and settings
+- **Expert mode** - for users who know exactly what they want
+
+### Computer Roles
+
+The installer automatically determines the best role for each computer based on connected hardware:
+
+| Role | Description | Hardware Requirements |
+|------|-------------|----------------------|
+| **🖥️ SCADA Server** | Central control hub | Wireless modem |
+| **🎮 Control Station** | Operator interface | Monitor + wireless modem |
+| **📊 Monitor Station** | Equipment monitoring | Cable modem (connected to Mekanism) + wireless modem |
+| **📈 Data Logger** | Historical data storage | Wireless modem + storage space |
+
+### Manual Installation (Advanced)
+
+If you need to install specific components manually:
+
 ```lua
-installer cli <component>    # Force CLI mode
-installer server            # Install specific component
-installer configure         # Configuration wizard only
+installer server          # SCADA server only
+installer control         # Control station setup  
+installer monitor         # Monitoring station setup
+installer gui             # Install GUI then launch graphical installer
 ```
 
-### Available Components
+### Traditional Component Installation
 
-| Component | Description | Purpose |
-|-----------|-------------|---------|
-| `gui` | **GUI Components** | **Modern graphical interface library** |
-| `configure` | Configuration Wizard | Interactive setup for custom configuration |
-| `server` | SCADA Server | Central data acquisition and control |
-| `hmi` | HMI Client | Operator interface with touchscreen |
-| `rtu` | **Universal RTU/PLC** | **Auto-detecting RTU for any Mekanism system** |
-| `reactor` | Reactor RTU/PLC | Dedicated fusion reactor control |
-| `energy` | Energy RTU/PLC | Dedicated energy storage monitoring |
-| `fuel` | Fuel RTU/PLC | Dedicated fuel system management |
-| `laser` | Laser RTU/PLC | Dedicated fusion laser control |
-| `historian` | Data Historian | Historical data and trending |
-| `all` | Complete System | All components (dev/testing) |
+For experts who want specific components:
 
-### Quick Setup Examples
-
-#### **🖥️ Graphical Setup (Recommended)**
-
-1. **Any Computer with Advanced Computer + Monitor:**
-   ```lua
-   installer              # Launches GUI installer
-   ```
-   - Follow the visual wizard
-   - Hardware auto-detection
-   - Point-and-click component selection
-   - Integrated configuration
-
-#### **⚡ Quick 3-Computer Setup:**
-
-1. **Central Server Computer:**
-   ```lua
-   installer server       # Or use GUI installer
-   ```
-
-2. **Control Room Computer (with Monitor):**
-   ```lua
-   installer hmi          # Enhanced GUI with touch controls
-   ```
-
-3. **Any RTU Computer (connected to Mekanism devices):**
-   ```lua
-   installer rtu          # Auto-detects: Reactor, Energy, Fuel, or Laser
-   ```
-
-The Universal RTU automatically detects what Mekanism systems are connected and configures itself accordingly!
+```lua
+installer hmi             # Human Machine Interface
+installer rtu             # Universal auto-detecting RTU
+installer reactor         # Dedicated reactor RTU
+installer energy          # Dedicated energy RTU
+installer fuel            # Dedicated fuel RTU
+installer laser           # Dedicated laser RTU
+installer historian       # Data historian
+```
 
 ### Traditional Setup (Dedicated RTUs)
 

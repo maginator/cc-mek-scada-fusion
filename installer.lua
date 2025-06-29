@@ -7,6 +7,46 @@ local GITHUB_BRANCH = "main"
 local BASE_URL = "https://raw.githubusercontent.com/" .. GITHUB_REPO .. "/" .. GITHUB_BRANCH .. "/"
 
 local COMPONENTS = {
+    ["server"] = {
+        name = "SCADA Server Setup",
+        description = "Install central SCADA server for data collection and control",
+        files = {
+            {src = "scada_server.lua", dst = "scada_server.lua", startup = true},
+        },
+        requirements = {
+            "Wireless modem (any side)",
+            "Central computer for SCADA network",
+            "Start this component first"
+        }
+    },
+    
+    ["control"] = {
+        name = "Control Station Setup", 
+        description = "Install operator interface with monitor and touch controls",
+        files = {
+            {src = "scada_gui.lua", dst = "scada_gui.lua", startup = false},
+            {src = "scada_hmi.lua", dst = "scada_hmi.lua", startup = true},
+        },
+        requirements = {
+            "Monitor (any side)",
+            "Wireless modem (any side)", 
+            "Advanced Computer recommended for touch controls"
+        }
+    },
+    
+    ["monitor"] = {
+        name = "Monitor Station Setup",
+        description = "Install auto-detecting RTU for monitoring Mekanism equipment",
+        files = {
+            {src = "universal_rtu.lua", dst = "universal_rtu.lua", startup = true},
+        },
+        requirements = {
+            "Cable modem connected to Mekanism devices",
+            "Wireless modem for SCADA communication",
+            "Automatically detects equipment type"
+        }
+    },
+
     ["gui"] = {
         name = "GUI Components",
         description = "Graphical user interface library and installer",
@@ -33,19 +73,6 @@ local COMPONENTS = {
             "Run this first to configure your SCADA system",
             "Detects hardware and sets up component configuration",
             "Optimized for ComputerCraft screen dimensions"
-        }
-    },
-
-    ["server"] = {
-        name = "SCADA Server",
-        description = "Central data acquisition and control server",
-        files = {
-            {src = "scada_server.lua", dst = "scada_server.lua", startup = true},
-        },
-        requirements = {
-            "Wireless Modem (auto-detected or configured)",
-            "Computer with adequate storage",
-            "Run 'configurator' first for custom setup"
         }
     },
     
@@ -149,10 +176,10 @@ local COMPONENTS = {
         name = "Complete SCADA System",
         description = "Install all components (for testing/development)",
         files = {
+            {src = "installer_simple.lua", dst = "installer_simple.lua"},
             {src = "scada_gui.lua", dst = "scada_gui.lua"},
-            {src = "scada_installer_gui.lua", dst = "scada_installer_gui.lua"},
-            {src = "installer_new.lua", dst = "installer_gui.lua"},
-            {src = "configurator.lua", dst = "configurator.lua"},
+            {src = "scada_installer_gui_fixed.lua", dst = "scada_installer_gui_fixed.lua"},
+            {src = "configurator_compact.lua", dst = "configurator_compact.lua"},
             {src = "scada_server.lua", dst = "scada_server.lua"},
             {src = "scada_hmi.lua", dst = "scada_hmi.lua"},
             {src = "universal_rtu.lua", dst = "universal_rtu.lua"},
@@ -419,12 +446,18 @@ function Installer:run(args)
     
     -- Parse arguments
     if #args == 0 then
+        -- No arguments - try simple installer first
+        if self:trySimpleInstaller() then
+            return true
+        end
+        -- Fall back to menu
         self:showMenu()
         return
     end
     
     self.component = args[1]:lower()
     
+    -- Handle special commands
     if self.component == "help" or self.component == "--help" or self.component == "-h" then
         self:showMenu()
         return
@@ -433,6 +466,23 @@ function Installer:run(args)
     if self.component == "list" then
         self:showMenu()
         return
+    end
+    
+    if self.component == "simple" or self.component == "easy" or self.component == "quick" then
+        return self:runSimpleInstaller()
+    end
+    
+    if self.component == "gui" then
+        -- Install GUI then launch graphical installer
+        local success = self:installComponent("gui")
+        if success then
+            print("GUI installed! Launching graphical installer...")
+            sleep(1)
+            if fs.exists("installer_gui.lua") then
+                dofile("installer_gui.lua")
+            end
+        end
+        return success
     end
     
     -- Install component
@@ -445,6 +495,60 @@ function Installer:run(args)
     end
     
     return true
+end
+
+function Installer:trySimpleInstaller()
+    -- Check if we should use simple installer
+    local w, h = term.getSize()
+    
+    -- Offer simple installer for better UX
+    print("=== MEKANISM FUSION REACTOR SCADA INSTALLER ===")
+    print("")
+    print("Choose installation method:")
+    print("  1. 🚀 Quick Setup (Recommended) - Automatic configuration")
+    print("  2. ⚙️ Advanced Setup - Manual component selection")
+    print("  3. 📱 Graphical Installer - GUI interface")
+    print("")
+    print("Enter choice (1-3) or ENTER for Quick Setup: ")
+    
+    local input = read()
+    
+    if input == "" or input == "1" then
+        return self:runSimpleInstaller()
+    elseif input == "2" then
+        return false  -- Use advanced menu
+    elseif input == "3" then
+        -- Try to install and run GUI
+        print("Installing GUI components...")
+        if self:installComponent("gui") then
+            if fs.exists("installer_gui.lua") then
+                dofile("installer_gui.lua")
+                return true
+            end
+        end
+        print("GUI installation failed, falling back to menu...")
+        return false
+    else
+        print("Invalid choice, using advanced menu...")
+        return false
+    end
+end
+
+function Installer:runSimpleInstaller()
+    -- Download and run the simple installer
+    local url = BASE_URL .. "installer_simple.lua"
+    local temp_file = "temp_simple_installer.lua"
+    
+    local success, error = pcall(self.downloadFile, self, url, temp_file)
+    if success then
+        dofile(temp_file)
+        fs.delete(temp_file)
+        return true
+    else
+        self:log("Failed to download simple installer: " .. error)
+        print("Simple installer unavailable, using advanced menu...")
+        return false
+    end
 end
 
 -- Main execution

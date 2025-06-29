@@ -1,10 +1,16 @@
 # SCADA System Files
 
-## Core System Components
+## Installation System
 
 | File | Description | Usage |
 |------|-------------|-------|
-| `installer.lua` | Main installer for all components | `installer <component>` |
+| `installer.lua` | Main installer with streamlined workflow | `installer` (starts Quick Setup) |
+| `installer_simple.lua` | Simple installer with automatic configuration | Auto-downloaded by main installer |
+
+## Core SCADA Components
+
+| File | Description | Usage |
+|------|-------------|-------|
 | `scada_server.lua` | Central SCADA server | Auto-starts after installation |
 | `scada_hmi.lua` | Human Machine Interface client | Auto-starts after installation |
 | `universal_rtu.lua` | Auto-detecting RTU for any Mekanism system | Auto-starts after installation |
@@ -35,19 +41,32 @@
 | `README.md` | Complete system documentation and setup guide |
 | `FILES.md` | This file - summary of all components |
 
-## Installation Workflow
+## Streamlined Installation Workflow
 
+### ⚡ Quick Setup (Recommended)
 1. **Download installer:** `pastebin get <id> installer`
-2. **Install GUI components:** `installer gui` (optional, for graphical interface)
-3. **Install configuration:** `installer configure`
-4. **Run configurator:** `configurator`
-5. **Install SCADA components:** `installer server`, `installer hmi`, `installer rtu`
+2. **Run installer:** `installer`
+3. **Choose "Quick Setup":** Automatically detects hardware and installs appropriate components
+4. **Done!** Computer is configured and ready to use
 
-## Recommended Minimal Setup
+### Alternative Workflows
+- **Graphical:** `installer` → Choose "Graphical Installer" 
+- **Manual:** `installer server|control|monitor` for specific roles
+- **Advanced:** `installer` → Choose "Advanced Setup" for traditional component selection
 
-- **Server Computer:** `installer server`
-- **Control Room Computer:** `installer hmi` 
-- **RTU Computer(s):** `installer rtu` (auto-detecting) or specific RTU types
-- **Optional:** `installer historian` for data logging
+## Computer Roles (Auto-Detected)
+
+| Hardware Configuration | Auto-Assigned Role | Components Installed |
+|------------------------|-------------------|---------------------|
+| Wireless modem only | SCADA Server | `scada_server.lua` |
+| Monitor + wireless modem | Control Station | `scada_gui.lua`, `scada_hmi.lua` |
+| Cable modem + wireless modem | Monitor Station | `universal_rtu.lua` |
+| Advanced computer | Enhanced features | GUI components included |
+
+## Manual Installation (Advanced Users)
+- **Server:** `installer server`
+- **Control:** `installer control` 
+- **Monitor:** `installer monitor`
+- **Traditional components:** `installer hmi|rtu|reactor|energy|fuel|laser|historian`
 
 All components are optimized for ComputerCraft screen dimensions (51x19) and include proper SCADA architecture with wireless communication.
